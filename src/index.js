@@ -5,9 +5,14 @@ const createStream = () => {
     return K.sequentially(1000, [R.inc(0),R.inc(1),R.inc(2)]);
 }
 
-const insertDomElem = (className) => {
+const createStreamFromEvent = (className,event,initialCount = 0) => {
+    const observedElement =  document.querySelector(`.${className}`);
+    return  K.fromEvents(observedElement, 'click').map(event => ++initialCount);;
+}
+
+const insertDomElem = (className,tagName=`div`,text=``) => {
     const bodyElem = document.querySelector(`body`);
-    bodyElem.insertAdjacentHTML("beforeBegin", `<div class=${className}> </div>`);
+    bodyElem.insertAdjacentHTML("beforeEnd", `<${tagName} class=${className}>${text}</${tagName}>`);
 }
 
 const displayCountToDom = (stream,counterClassName) => {
@@ -17,6 +22,13 @@ const displayCountToDom = (stream,counterClassName) => {
     });
 }
 const counterClassName =`counter`;
-const stream = createStream();
+const counterPlaceClassName =`counterPlace`;
+const counterStream = createStream();
+
+const buttonClassName =`buttonCounter`;
+
 insertDomElem(counterClassName);
-displayCountToDom(stream,counterClassName);
+insertDomElem(counterPlaceClassName,`div`,`incrementCounter`);
+displayCountToDom(counterStream,counterClassName);
+insertDomElem(buttonClassName,`button`,`click me`);
+displayCountToDom(createStreamFromEvent(buttonClassName),counterPlaceClassName);
