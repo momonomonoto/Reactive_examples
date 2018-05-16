@@ -5,9 +5,23 @@ const createStream = () => {
     return K.sequentially(1000, [R.inc(0),R.inc(1),R.inc(2)]);
 }
 
-const createStreamFromEvent = (className,event,initialCount = 0) => {
-    const observedElement =  document.querySelector(`.${className}`);
-    return  K.fromEvents(observedElement, 'click').map(event => ++initialCount);;
+const createCountStreamFromEventList = (classNameIncrement,buttonDecrementClassName, counterClassName, count = 0, event='click') => {
+    const observedIncrementElement =  document.querySelector(`.${classNameIncrement}`);
+    const observedDecrementElement =  document.querySelector(`.${buttonDecrementClassName}`);
+    const counterElement = document.querySelector(`.${counterClassName}`);
+
+    const a = K.fromEvents(observedIncrementElement, event).scan(sum => sum + 1, 0);
+    const b = K.fromEvents(observedDecrementElement, event).scan(sum => sum - 1, 0);
+    a.onValue(()=>{
+        ++count;
+        counterElement.innerHTML = count;
+    });
+    b.onValue(()=>{
+        --count;
+        counterElement.innerHTML = count;
+    });
+
+    return count;
 }
 
 const insertDomElem = (className,tagName=`div`,text=``) => {
@@ -15,9 +29,12 @@ const insertDomElem = (className,tagName=`div`,text=``) => {
     bodyElem.insertAdjacentHTML("beforeEnd", `<${tagName} class=${className}>${text}</${tagName}>`);
 }
 
-const displayCountToDom = (stream,counterClassName) => {
+const displayCountToDom = (streamOrValue,counterClassName) => {
     const counterElement = document.querySelector(`.${counterClassName}`);
-    stream.onValue(currentCountValue => {
+    if (typeof streamOrValue === 'number'||typeof streamOrValue === 'string') {
+        return counterElement.innerHTML = stream;
+    }
+    streamOrValue.onValue(currentCountValue => {
         counterElement.innerHTML = currentCountValue;
     });
 }
@@ -25,10 +42,11 @@ const counterClassName =`counter`;
 const counterPlaceClassName =`counterPlace`;
 const counterStream = createStream();
 
-const buttonClassName =`buttonCounter`;
+const buttonIncrementClassName =`buttonIncrementClassName`;
+const buttonDecrementClassName =`buttonDecrementClassName`;
 
 insertDomElem(counterClassName);
-insertDomElem(counterPlaceClassName,`div`,`incrementCounter`);
 displayCountToDom(counterStream,counterClassName);
-insertDomElem(buttonClassName,`button`,`click me`);
-displayCountToDom(createStreamFromEvent(buttonClassName),counterPlaceClassName);
+insertDomElem(buttonIncrementClassName,`button`,`++increment`);
+insertDomElem(buttonDecrementClassName,`button`,`--decrement`);
+createCountStreamFromEventList(buttonIncrementClassName,buttonDecrementClassName,counterClassName);
