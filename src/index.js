@@ -1,52 +1,40 @@
 import K from 'kefir'
 import * as R from 'ramda';
 
-const createStream = () => {
-    return K.sequentially(1000, [R.inc(0),R.inc(1),R.inc(2)]);
-}
-
-const createCountStreamFromEventList = (classNameIncrement,buttonDecrementClassName, counterClassName, count = 0, event='click') => {
-    const observedIncrementElement =  document.querySelector(`.${classNameIncrement}`);
-    const observedDecrementElement =  document.querySelector(`.${buttonDecrementClassName}`);
-    const counterElement = document.querySelector(`.${counterClassName}`);
-
-    const a = K.fromEvents(observedIncrementElement, event).scan(sum => sum + 1, 0);
-    const b = K.fromEvents(observedDecrementElement, event).scan(sum => sum - 1, 0);
-    a.onValue(()=>{
-        ++count;
-        counterElement.innerHTML = count;
-    });
-    b.onValue(()=>{
-        --count;
-        counterElement.innerHTML = count;
-    });
-
-    return count;
-}
-
 const insertDomElem = (className,tagName=`div`,text=``) => {
     const bodyElem = document.querySelector(`body`);
     bodyElem.insertAdjacentHTML("beforeEnd", `<${tagName} class=${className}>${text}</${tagName}>`);
+    return document.querySelector(`.${className}`);
+}
+const classNameList = [`inc`,`dec`];
+classNameList.forEach(className=>insertDomElem(className,`button`,className))
+
+const incButton =  document.querySelector(`.inc`);
+const decButton =  document.querySelector(`.dec`);
+
+const inc$ = K.fromEvents(incButton, "click").map(_ => R.inc)
+const dec$ = K.fromEvents(decButton, "click").map(_ => R.dec)
+let makeStore = function (seed, action$) {
+    return action$
+        .merge(K.constant(seed))
+        .scan((state, fn) => fn(state))
+        .skipDuplicates()
 }
 
-const displayCountToDom = (streamOrValue,counterClassName) => {
-    const counterElement = document.querySelector(`.${counterClassName}`);
-    if (typeof streamOrValue === 'number'||typeof streamOrValue === 'string') {
-        return counterElement.innerHTML = stream;
-    }
-    streamOrValue.onValue(currentCountValue => {
-        counterElement.innerHTML = currentCountValue;
-    });
+let state$ = makeStore(0,K.merge([
+    inc$,
+    dec$
+]))
+
+
+let render = function (state) {
+    return `<div>
+    ${state} 
+    <button type="button" class="Increment">inc</button>
+    <button type="button" class="Deccrement">dec</button>
+  </div>`
 }
-const counterClassName =`counter`;
-const counterPlaceClassName =`counterPlace`;
-const counterStream = createStream();
 
-const buttonIncrementClassName =`buttonIncrementClassName`;
-const buttonDecrementClassName =`buttonDecrementClassName`;
-
-insertDomElem(counterClassName);
-displayCountToDom(counterStream,counterClassName);
-insertDomElem(buttonIncrementClassName,`button`,`++increment`);
-insertDomElem(buttonDecrementClassName,`button`,`--decrement`);
-createCountStreamFromEventList(buttonIncrementClassName,buttonDecrementClassName,counterClassName);
+state$.onValue(state => {
+    insertDomElem(`classNamePlace`,`div`).innerHTML = render(state)
+})
