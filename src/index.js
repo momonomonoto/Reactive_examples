@@ -24,9 +24,11 @@ const timedSpaceUp$  = getTimeEventSpace(`keyup`);
 
 const timedSpaceDown$ = getTimeEventSpace(`keydown`);
 
-const dotOrLine$ = K.combine([timedSpaceDown$, timedSpaceUp$], (a, b) => a - b)
+const timeSpan$ = K.combine([timedSpaceDown$, timedSpaceUp$], (a, b) => a - b)
     .skipDuplicates()
-    .filter(value=>value>0)
+    .filter(value=>value>0);
+
+const dotOrLine$ = timeSpan$
     .map(value=>value>SPAN?(elem)=>elem+LINE:(elem)=>elem+DOT);
 
 const state = makeStore(0,K.merge([
