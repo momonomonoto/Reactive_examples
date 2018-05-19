@@ -1,13 +1,12 @@
 import K from 'kefir'
 import * as R from 'ramda';
 
-const body = document.querySelector(`body`);
 
-const inc$ = K.fromEvents(body, `click`)
+const inc$ = K.fromEvents(document, `click`)
     .filter(event => event.target.className === `Increment`)
     .map(_ => R.inc)
 
-const dec$ = K.fromEvents(body, `click`)
+const dec$ = K.fromEvents(document, `click`)
     .filter(event => event.target.className === `Deccrement`)
     .map(_ => R.dec)
 
@@ -34,5 +33,5 @@ let render = function (state) {
 
 state$
     .onValue(state => {
-    body.innerHTML = render(state)
+     document.body.innerHTML = render(state)
 })
