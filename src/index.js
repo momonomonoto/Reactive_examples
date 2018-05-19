@@ -1,38 +1,36 @@
 import K from 'kefir'
+import moment from 'moment'
 import * as R from 'ramda';
 
-const body = document.querySelector(`body`);
+const SPAN = 400
+const DOT = `.`;
+const LINE = `-`;
 
-const inc$ = K.fromEvents(body, `click`)
-    .filter(event => event.target.className === `Increment`)
-    .map(_ => R.inc)
+const getTimeEventSpace = (event) => {
+    return K.fromEvents(document, event)
+        .filter(event =>event.keyCode === 32)
+        .skipDuplicates()
+        .map(()=>moment().valueOf() )
+}
 
-const dec$ = K.fromEvents(body, `click`)
-    .filter(event => event.target.className === `Deccrement`)
-    .map(_ => R.dec)
-
-let makeStore = function (seed, action$) {
+const makeStore = (seed, action$) => {
     return action$
-        .merge(K.constant(seed))
+        .merge(K.constant(`.`))
         .scan((state, fn) => fn(state))
         .skipDuplicates()
 }
 
-let state$ = makeStore(0,K.merge([
-    inc$,
-    dec$
+const timedSpaceUp$  = getTimeEventSpace(`keyup`);
+
+const timedSpaceDown$ = getTimeEventSpace(`keydown`);
+
+const resultStream$ = K.combine([timedSpaceDown$, timedSpaceUp$], (a, b) => a - b)
+    .skipDuplicates()
+    .filter(value=>value>0)
+    .map(value=>value>SPAN?(elem)=>elem+LINE:(elem)=>elem+DOT);
+
+const resultState= makeStore(0,K.merge([
+    resultStream$,
 ]))
 
-
-let render = function (state) {
-    return `<div>
-    ${state} 
-    <button type="button" class="Increment">increment</button>
-    <button type="button" class="Deccrement">decrement</button>
-  </div>`
-}
-
-state$
-    .onValue(state => {
-    body.innerHTML = render(state)
-})
+resultState.log();
