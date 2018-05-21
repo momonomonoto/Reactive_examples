@@ -1,6 +1,6 @@
 import K from 'kefir'
 import * as R from 'ramda';
-
+import * as D from "kefir.db"
 
 const inc$ = K.fromEvents(document, `click`)
     .filter(event => event.target.className === `Increment`)
@@ -8,20 +8,11 @@ const inc$ = K.fromEvents(document, `click`)
 
 const dec$ = K.fromEvents(document, `click`)
     .filter(event => event.target.className === `Deccrement`)
-    .map(_ => R.dec)
+    .map(_ => R.dec);
 
-let makeStore = function (seed, action$) {
-    return action$
-        .merge(K.constant(seed))
-        .scan((state, fn) => fn(state))
-        .skipDuplicates()
-}
+const initialState$ = D.init(0);
 
-let state$ = makeStore(0,K.merge([
-    inc$,
-    dec$
-]))
-
+let state$ = D.run(()=>D.makeStore({}))(initialState$,inc$,dec$).$;
 
 let render = function (state) {
     return `<div>

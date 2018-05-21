@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/momonomonoto/Reactive_examples#readme",
   "dependencies": {
+    "@paqmind/ramda": "^0.1.4",
     "autoprefixer-loader": "3.2.0",
     "babel-core": "^6.26.0",
     "babel-eslint": "^7.2.3",
@@ -43,6 +44,7 @@
     "html-webpack-plugin": "^3.2.0",
     "jest": "20.0.4",
     "kefir": "^3.8.3",
+    "kefir.db": "^0.4.3",
     "node-sass": "^4.8.3",
     "nodemon": "^1.17.4",
     "prop-types": "^15.5.10",
