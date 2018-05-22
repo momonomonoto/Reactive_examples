@@ -1,38 +1,40 @@
 import K from 'kefir'
-import moment from 'moment'
+import getMilliseconds from 'date-fns/get_milliseconds'
 import * as R from 'ramda';
+import morse from 'morse';
 
-const SPAN = 400
+const LINE_THRESHOLD_MS = 400;
 const DOT = `.`;
 const LINE = `-`;
 
+const resultDate = getMilliseconds(new Date());
 const getTimeEventSpace = (event) => {
     return K.fromEvents(document, event)
-        .filter(event =>event.keyCode === 32)
-        .skipDuplicates()
-        .map(()=>moment().valueOf() )
+        .filter(event => event.keyCode === 32)
+        .map(() => getMilliseconds(new Date()) )
 }
 
-const makeStore = (seed, action$) => {
+const makeStore = (action$) => {
     return action$
-        .merge(K.constant(`.`))
-        .scan((state, fn) => fn(state))
-        .skipDuplicates()
+        .merge(K.constant(``))
+        .scan((state, fn) =>  fn(state))
+        .take(3)
 }
-
+console.log(resultDate,'new Date()');
 const timedSpaceUp$  = getTimeEventSpace(`keyup`);
 
 const timedSpaceDown$ = getTimeEventSpace(`keydown`);
 
-const timeSpan$ = K.combine([timedSpaceDown$, timedSpaceUp$], (a, b) => a - b)
-    .skipDuplicates()
-    .filter(value=>value>0);
+let dotOrLine$ = K.combine([timedSpaceDown$, timedSpaceUp$], (a, b) => a - b)
+    .filter(ms => ms > 0)
+    .map(ms => ms > LINE_THRESHOLD_MS ? LINE : DOT);
 
-const dotOrLine$ = timeSpan$
-    .map(value=>value>SPAN?(elem)=>elem+LINE:(elem)=>elem+DOT);
+const state$ = makeStore( K.merge([
+    dotOrLine$
+        .map(symbol => (state) => state + symbol)
+]));
 
-const state = makeStore(0,K.merge([
-    dotOrLine$,
-]))
-
-state.log();
+state$.onValue(state=>{
+    const resultSymbol = state.map(elemState=>morse.decode(elemState));
+    document.body.innerHTML = resultSymbol.join('');
+})
